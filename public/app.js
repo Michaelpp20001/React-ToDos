@@ -9,9 +9,16 @@ $(document).ready(function(){
             createTodo()
         }
     });
+
+    $(".list").on("click", "li", function(){
+        updateTodo($(this))
+    })
     //on load, listening to clicks on list, and dynamically generated span, happens only
     //because we put the click listener on the ul's or on list class
-    $(".list").on("click", "span", function(){
+    $(".list").on("click", "span", function(event){
+        //this will stop the event from bubbling up or trigger parent li
+        event.stopPropagation();
+        //taking the _id from todo and sending a delete request to url
         var clickedId = $(this).parent().data("id");
         var deleteUrl = "/api/todos/" + clickedId;
         $(this).parent().remove();
@@ -35,8 +42,9 @@ function addTodos(todo){
 
 function addTodo(todo){
     var newTodo = $("<li class='task'>" + todo.name + " <span>X</span></li>");
-    //jQuery is storing the id of each new todo
+    //jQuery is storing the id and completed of each new todo
     newTodo.data("id", todo._id);
+    newTodo.data("completed", todo.completed);
     //toggle, or adding a new class for the todo if completed
     if(todo.completed)
         newTodo.addClass("done")
@@ -58,5 +66,27 @@ function createTodo(){
     })
     .catch(function(err){
         console.log(err);
+    })
+}
+
+function updateTodo(todo){
+    //click on li, fires this the event with this function with that todo
+    //create url, then check if that todo is currently completed
+    var updateUrl = "/api/todos/" + todo.data("id");
+    //changing the opposite of the completed to a variable
+    //then make request the api
+    var isDone = !todo.data("completed");
+    var updateData = {completed: isDone}
+    console.log(updateData);
+    $.ajax({
+        method: "PUT",
+        url: updateUrl,
+        data: updateData
+    })
+    .then(function(updatedTodo){
+        console.log(updatedTodo);
+        //toggling class changing data in jQuery variable to the isDone
+        todo.toggleClass("done");
+        todo.data("completed", isDone);
     })
 }
